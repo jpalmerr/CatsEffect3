@@ -1,0 +1,1 @@
+[typeclasses](https://typelevel.org/cats-effect/docs/typeclasses)
