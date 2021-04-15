@@ -1,7 +1,7 @@
 // fibers
 
 import cats.effect.kernel.Fiber
-import cats.effect.{MonadCancel, Spawn}
+import cats.effect.{MonadCancel, Spawn, Temporal}
 import cats.effect.syntax.all._
 import cats.syntax.all._
 
@@ -15,17 +15,18 @@ trait Connection[F[_]] {
   def close: F[Unit]
 }
 
-def endpoint[F[_]: Spawn](
+def endpoint[F[_]: Spawn]( // spawn semantic actions as-needed
                            server: Server[F])(
                            body: Array[Byte] => F[Array[Byte]])
 : F[Unit] = {
 
-  def handle(conn: Connection[F]): F[Unit] =
+  def handle(conn: Connection[F]): F[Unit] = {
     for {
       request <- conn.read
       response <- body(request)
       _ <- conn.write(response)
     } yield ()
+  }
 
   // wrapped in uncancellable to avoid resource leaks
   val handler: F[Fiber[F, Throwable, Unit]] = MonadCancel[F] uncancelable { poll =>
